@@ -19,6 +19,7 @@ class AdditPage(BasePage):
         super().__init__("ui/addit_page.ui", parent)
         self.client = SimpleTheatreClient()  # Добавлен клиент API
         self.current_user = None
+        self.setup_export()
         self.init_db()
         # Инициализация модели для списка файлов
         self.model = QStandardItemModel()
@@ -297,3 +298,47 @@ class AdditPage(BasePage):
                 return f"{size / (1024 * 1024 * 1024):.1f} GB"
         except BaseException:
             return "Неизвестно"
+        
+    def setup_export(self):
+        """Настройка экспорта"""
+        self.exportButton.clicked.connect(self.export_to_csv)
+
+    def export_to_csv(self):
+        """Экспорт данных в CSV"""
+        try:
+            from datetime import datetime
+            import csv
+            
+            # Получаем данные для экспорта
+            data = self.get_export_data()
+            if not data:
+                QMessageBox.warning(self, "Ошибка", "Нет данных для экспорта")
+                return
+                
+            # Создаем имя файла
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"export_{self.__class__.__name__}_{timestamp}.csv"
+            
+            # Сохраняем в CSV
+            with open(filename, 'w', newline='', encoding='utf-8') as file:
+                if data:
+                    writer = csv.DictWriter(file, fieldnames=data[0].keys())
+                    writer.writeheader()
+                    writer.writerows(data)
+                    
+            QMessageBox.information(self, "Успех", f"Данные экспортированы в {filename}")
+            
+        except Exception as e:
+            QMessageBox.warning(self, "Ошибка", f"Ошибка экспорта: {str(e)}")
+    
+    def get_export_data(self):
+        """Данные для экспорта файлов"""
+        data = []
+        for row in range(self.filesTable.rowCount()):
+            data.append({
+                "file_name": self.filesTable.item(row, 0).text(),
+                "file_size": self.filesTable.item(row, 1).text(),
+                "file_type": self.filesTable.item(row, 2).text(),
+                "uploaded_by": self.filesTable.item(row, 3).text()
+            })
+        return data
