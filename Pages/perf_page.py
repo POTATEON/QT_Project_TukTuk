@@ -13,7 +13,7 @@ class PerfPage(BasePage):
     def __init__(self, parent=None):
         super().__init__("ui/perf_page.ui", parent)
         self.client = SimpleTheatreClient()  # Добавлен клиент API
-
+        self.setup_export()
         self.current_performance = None
         self.current_role = None
         self.current_application = None
@@ -468,6 +468,57 @@ class PerfPage(BasePage):
                     self,
                     "Ошибка",
                     f"Не удалось удалить роль: {result.get('error', 'Unknown error')}")
+    
+    def setup_export(self):
+        """Настройка экспорта"""
+        self.exportButton.clicked.connect(self.export_to_csv)
+
+    def export_to_csv(self):
+        """Экспорт данных в CSV"""
+        try:
+            from datetime import datetime
+            import csv
+            
+            # Получаем данные для экспорта
+            data = self.get_export_data()
+            if not data:
+                QMessageBox.warning(self, "Ошибка", "Нет данных для экспорта")
+                return
+                
+            # Создаем имя файла
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"export_{self.__class__.__name__}_{timestamp}.csv"
+            
+            # Сохраняем в CSV
+            with open(filename, 'w', newline='', encoding='utf-8') as file:
+                if data:
+                    writer = csv.DictWriter(file, fieldnames=data[0].keys())
+                    writer.writeheader()
+                    writer.writerows(data)
+                    
+            QMessageBox.information(self, "Успех", f"Данные экспортированы в {filename}")
+            
+        except Exception as e:
+            QMessageBox.warning(self, "Ошибка", f"Ошибка экспорта: {str(e)}")
+    
+    def get_export_data(self):
+        """Данные для экспорта спектаклей"""
+        data = []
+        for row in range(self.performancesList.count()):
+            item = self.performancesList.item(row)
+            if item:
+                # Предполагаем, что текст в формате "Название (Дата)"
+                text = item.text()
+                parts = text.split(' (')
+                title = parts[0]
+                date = parts[1].replace(')', '') if len(parts) > 1 else ""
+                
+                data.append({
+                    "title": title,
+                    "date": date,
+                    "roles_count": "0"  # Можно добавить подсчет ролей
+                })
+        return data
 
     def set_user_role(self, role):
         """Установка роли пользователя"""

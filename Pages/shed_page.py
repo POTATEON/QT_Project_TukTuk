@@ -288,7 +288,7 @@ class ShedPage(BasePage):
         self.client = SimpleTheatreClient()  # Добавлен клиент API
         self.current_user = ""
         self.init_db()
-
+        self.setup_export()
         self.setup_calendar()
         self.popup = LessonPopup(self)
         self.add_btn.clicked.connect(self.add_lesson)
@@ -417,3 +417,46 @@ class ShedPage(BasePage):
 
         except Exception as e:
             QMessageBox.critical(self, "Ошибка", f"Ошибка: {e}")
+
+    def setup_export(self):
+        """Настройка экспорта"""
+        self.exportButton.clicked.connect(self.export_to_csv)
+
+    def export_to_csv(self):
+        """Экспорт данных в CSV"""
+        try:
+            from datetime import datetime
+            import csv
+            
+            # Получаем данные для экспорта
+            data = self.get_export_data()
+            if not data:
+                QMessageBox.warning(self, "Ошибка", "Нет данных для экспорта")
+                return
+                
+            # Создаем имя файла
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"export_{self.__class__.__name__}_{timestamp}.csv"
+            
+            # Сохраняем в CSV
+            with open(filename, 'w', newline='', encoding='utf-8') as file:
+                if data:
+                    writer = csv.DictWriter(file, fieldnames=data[0].keys())
+                    writer.writeheader()
+                    writer.writerows(data)
+                    
+            QMessageBox.information(self, "Успех", f"Данные экспортированы в {filename}")
+            
+        except Exception as e:
+            QMessageBox.warning(self, "Ошибка", f"Ошибка экспорта: {str(e)}")
+    
+    def get_export_data(self):
+        data = []
+        for row in range(self.lessonsTable.rowCount()):
+            data.append({
+                "title": self.lessonsTable.item(row, 0).text(),
+                "date": self.lessonsTable.item(row, 1).text(),
+                "time": self.lessonsTable.item(row, 2).text(),
+                "location": self.lessonsTable.item(row, 3).text()
+            })
+        return data

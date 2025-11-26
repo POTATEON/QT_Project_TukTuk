@@ -1,6 +1,6 @@
 from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6.QtGui import QPainter
-from PyQt6.QtWidgets import QWidget, QHBoxLayout, QLabel, QListWidgetItem
+from PyQt6.QtWidgets import QWidget, QHBoxLayout, QLabel, QListWidgetItem, QMessageBox
 
 from .base_page import BasePage
 from simple_api_client import SimpleTheatreClient  # Добавлен импорт
@@ -13,6 +13,7 @@ class HomePage(BasePage):
             super().__init__("ui/home_page.ui", parent)
             self.client = SimpleTheatreClient()  # Добавлен клиент API
             self.setup_displays()
+            self.setup_export()
 
         def showEvent(self, event):
             self.setup_displays()
@@ -20,6 +21,7 @@ class HomePage(BasePage):
 
         def setup_displays(self):
             # Получаем информацию о ближайшем занятии через API
+            lessons = ""
             lessons = self.client.get_lessons()
             if lessons:
                 # Берем первое занятие (предполагаем, что API возвращает отсортированный список)
@@ -87,7 +89,53 @@ class HomePage(BasePage):
                 self.listWidget.addItem(item)
                 self.listWidget.setItemWidget(item, custom_item)
 
+            try:
+                participants = self.client.get_participants()
+                self.participantsList.clear()
+                
+                for participant in participants:
+                    item = f"{participant['username']}"
+                    self.participantsList.addItem(item)
+                        
+            except Exception as e:
+                print(f"Ошибка загрузки участников: {e}")
 
+        def setup_export(self):
+            """Настройка экспорта"""
+            self.exportButton.clicked.connect(self.export_to_csv)
+
+        def export_to_csv(self):
+            """Экспорт данных в CSV"""
+            try:
+                from datetime import datetime
+                import csv
+                
+                # Получаем данные для экспорта
+                data = self.get_export_data()
+                if not data:
+                    QMessageBox.warning(self, "Ошибка", "Нет данных для экспорта")
+                    return
+                    
+                # Создаем имя файла
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                filename = f"export_{self.__class__.__name__}_{timestamp}.csv"
+                
+                # Сохраняем в CSV
+                with open(filename, 'w', newline='', encoding='utf-8') as file:
+                    if data:
+                        writer = csv.DictWriter(file, fieldnames=data[0].keys())
+                        writer.writeheader()
+                        writer.writerows(data)
+                        
+                QMessageBox.information(self, "Успех", f"Данные экспортированы в {filename}")
+                
+            except Exception as e:
+                QMessageBox.warning(self, "Ошибка", f"Ошибка экспорта: {str(e)}")
+
+        def get_export_data(self):
+            return [{"participant": item.text().replace("👤 ", "")} 
+                    for item in range(self.participantsList.count())]
+        
 class CustomListItem(QWidget):
     def __init__(self, name, avatar_data):
         super().__init__()

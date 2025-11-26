@@ -24,9 +24,42 @@ class MainWindow(QMainWindow):
         self.avatarLabel.mousePressEvent = lambda event: self.change_avatar()
         self.logoutButton.clicked.connect(self.logout)
         self.setup_pages()
+        self.init_local_db()
         self.setup_navigation()
         self.current_page = None
         self.update_part_check()
+
+    def init_local_db(self):
+        """Инициализация локальной БД"""
+        import sqlite3
+        self.local_conn = sqlite3.connect('local_cache.db')
+        
+        # Создаем таблицы для каждой страницы
+        tables = {
+            'home_exports': 'id INTEGER PRIMARY KEY, filename TEXT, export_date TEXT, data TEXT',
+            'shed_exports': 'id INTEGER PRIMARY KEY, filename TEXT, export_date TEXT, data TEXT', 
+            'perf_exports': 'id INTEGER PRIMARY KEY, filename TEXT, export_date TEXT, data TEXT',
+            'addit_exports': 'id INTEGER PRIMARY KEY, filename TEXT, export_date TEXT, data TEXT'
+        }
+        
+        for table_name, schema in tables.items():
+            self.local_conn.execute(f'CREATE TABLE IF NOT EXISTS {table_name} ({schema})')
+        
+        self.local_conn.commit()
+
+    def save_export_record(self, page_name, filename, data):
+        """Сохранение записи об экспорте"""
+        from datetime import datetime
+        try:
+            cursor = self.local_conn.cursor()
+            cursor.execute(
+                f'INSERT INTO {page_name}_exports (filename, export_date, data) VALUES (?, ?, ?)',
+                (filename, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), str(data))
+            )
+            self.local_conn.commit()
+            print(f"Экспорт сохранен в БД: {filename}")
+        except Exception as e:
+            print(f"Ошибка сохранения экспорта: {e}")
 
     def load_fonts(self) -> None:
         """
@@ -194,6 +227,25 @@ class MainWindow(QMainWindow):
         self.perf_page.navigate_to.connect(self.switch_page)
         self.addit_page.navigate_to.connect(self.switch_page)
 
+    def navigate_from_button(self, button_name):
+        """Обработчик нажатия кнопки с логикой переключения"""
+        if self.current_page == button_name:
+            # Если уже на этой странице - идем домой
+            self.switch_page("home")
+        else:
+            # Иначе переходим на страницу кнопки
+            self.switch_page(button_name)
+
+    def update_button_texts(self, current_page):
+        """Обновляем только текст кнопок"""
+        for name, text in self.buttons.items():
+            btn = getattr(self, f"{name}Button", None)
+            if btn:
+                if name == current_page and current_page != 'home':
+                    btn.setText('На главную')
+                else:
+                    btn.setText(text)
+                    
     def switch_page(self, page_name):
         """Переключение между страницами"""
         if page_name not in self.pages:
@@ -202,18 +254,34 @@ class MainWindow(QMainWindow):
         self.stackedWidget.setCurrentWidget(self.pages[page_name])
         self.current_page = page_name
 
+        # Обновляем текст и подключения кнопок
         for name in self.pages:
             btn = getattr(self, f"{name}Button", None)
             if btn:
-                btn.disconnect()
+                # Определяем целевое действие для кнопки
                 if name == page_name and page_name != 'home':
-                    btn.setText('На главную')
-                    btn.clicked.connect(lambda: self.switch_page('home'))
+                    target_page = 'home'
+                    btn_text = 'На главную'
                 else:
-                    btn.setText(self.buttons[name])
-                    btn.clicked.connect(
-                        lambda checked, n=name: self.switch_page(n))
+                    target_page = name
+                    btn_text = self.buttons.get(name, name)
+                
+                # Обновляем только если изменилось состояние
+                if btn.text() != btn_text:
+                    btn.setText(btn_text)
+                    btn.disconnect()
+                    btn.clicked.connect(lambda checked, p=target_page: self.switch_page(p))
 
+    # def switch_page(self, page_name):
+    #     """Переключение между страницами"""
+    #     if page_name not in self.pages:
+    #         return
+
+    #     self.stackedWidget.setCurrentWidget(self.pages[page_name])
+    #     self.current_page = page_name
+    #     self.update_button_texts(page_name)
+        
+        
     def update_part_check(self):
         """Обновление состояния чекбокса через API"""
         if not self.current_user:

@@ -5,7 +5,6 @@ import traceback
 from PyQt6.QtCore import QSettings
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication
-
 # Добавляем текущую директорию в путь для импорта
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 

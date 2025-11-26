@@ -75,7 +75,15 @@ class SimpleTheatreClient:
             return data.get('success', False)
         except requests.exceptions.RequestException:
             return False
-
+        
+    def get_participants(self):
+        """Получение списка участников (не организаторов)"""
+        try:
+            response = requests.get(f"{self.base_url}/api/user/participants")
+            return response.json()
+        except requests.exceptions.RequestException:
+            return []
+        
     def get_current_user(self) -> Optional[Dict]:
         """Получение текущего пользователя через API"""
         try:
@@ -229,6 +237,7 @@ class SimpleTheatreClient:
     def get_lessons(self) -> list:
         try:
             response = requests.get(f"{self.base_url}/api/lessons")
+            print(response.json())
             return response.json()
         except requests.exceptions.RequestException:
             return []
