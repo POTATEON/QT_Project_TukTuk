@@ -1,6 +1,5 @@
 import sys
 import os
-import sqlite3
 import traceback
 from PyQt6.QtCore import QSettings
 from PyQt6.QtGui import QIcon
@@ -23,13 +22,13 @@ def main():
     print(f"Сохраненный пользователь: {saved_username}")
 
     if saved_username:
-        # Проверяем существует ли пользователь через API
+        # Проверяем существует ли пользователь
         try:
             client = SimpleTheatreClient()
             user_data = client.get_current_user()
             print(user_data)
             if user_data and user_data['username'] == saved_username:
-                # Автоматически открываем главное окно
+                # Открываем главное окно
                 from main_window import MainWindow
                 app_windows['main'] = MainWindow()
                 app_windows['main'].setWindowTitle("«TEAC»")
