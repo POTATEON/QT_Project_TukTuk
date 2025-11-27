@@ -888,7 +888,7 @@ QPushButton:pressed {
    </property>
    <property name="icon">
     <iconset>
-     <normaloff>E:/DOWNLOADS/724938 (1).png</normaloff>E:/DOWNLOADS/724938 (1).png</iconset>
+     <normaloff>../pages/export.png</normaloff>../pages/export.png</iconset>
    </property>
    <property name="flat">
     <bool>false</bool>

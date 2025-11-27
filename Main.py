@@ -56,7 +56,7 @@ def main():
         print("Нет сохраненного пользователя")
         show_auth_window()
 
-        # Запуск главного цикла
+    # Запуск главного цикла
     result = app.exec()
     sys.exit(result)
 

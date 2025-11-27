@@ -151,7 +151,7 @@ p, li { white-space: pre-wrap; }
          <number>20</number>
         </property>
         <item>
-         <widget class="QPushButton" name="shedButton_2">
+         <widget class="QPushButton" name="addFileButton">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
             <horstretch>0</horstretch>
@@ -374,7 +374,7 @@ QPushButton:pressed {
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="shedButton_3">
+         <widget class="QPushButton" name="deleteFileButton">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
             <horstretch>0</horstretch>
@@ -829,7 +829,7 @@ QPushButton:pressed {
    </property>
    <property name="icon">
     <iconset>
-     <normaloff>E:/DOWNLOADS/724938 (1).png</normaloff>E:/DOWNLOADS/724938 (1).png</iconset>
+     <normaloff>../pages/export.png</normaloff>../pages/export.png</iconset>
    </property>
    <property name="flat">
     <bool>false</bool>

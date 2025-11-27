@@ -3,7 +3,7 @@ import sqlite3
 import sys
 from datetime import datetime
 
-from PyQt6 import QtWidgets, uic
+from PyQt6 import QtWidgets
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QStandardItemModel, QStandardItem
 from PyQt6.QtWidgets import (QFileDialog,
@@ -17,10 +17,14 @@ class AdditPage(BasePage):
 
     def __init__(self, parent=None):
         super().__init__("ui/addit_page.ui", parent)
-        self.client = SimpleTheatreClient()  # Добавлен клиент API
+
+        self.client = SimpleTheatreClient()
+
         self.current_user = None
+
         self.setup_export()
         self.init_db()
+
         # Инициализация модели для списка файлов
         self.model = QStandardItemModel()
         self.listView.setModel(self.model)
@@ -32,8 +36,8 @@ class AdditPage(BasePage):
             QAbstractItemView.EditTrigger.NoEditTriggers)
 
         # Подключение сигналов кнопок
-        self.shedButton_2.clicked.connect(self.add_file)
-        self.shedButton_3.clicked.connect(self.delete_file)
+        self.addFileButton.clicked.connect(self.add_file)
+        self.deleteFileButton.clicked.connect(self.delete_file)
 
         # Загрузка существующих файлов через API при запуске
         self.load_files_from_api()
@@ -83,12 +87,10 @@ class AdditPage(BasePage):
         # Двойной клик для открытия файла
         self.listView.doubleClicked.connect(self.open_file)
         print(self.current_user)
-        print("segsegsegeges")
 
         if self.current_user != 'organizer':
-            self.shedButton_2.hide()
-            self.shedButton_3.hide()
-        print("d")
+            self.addFileButton.hide()
+            self.deleteFileButton.hide()
 
     def add_file(self):
         """Добавление файла через диалог выбора"""
@@ -103,7 +105,6 @@ class AdditPage(BasePage):
         if file_paths:
             for file_path in file_paths:
                 self.add_file_to_list(file_path)
-            # Сохраняем через API
             self.save_files_to_api()
 
     def save_files_to_api(self):
@@ -162,10 +163,8 @@ class AdditPage(BasePage):
             for index in selected_indexes:
                 file_path = self.model.itemFromIndex(
                     index).data(Qt.ItemDataRole.UserRole)
-                # Удаляем через API
                 success = self.client.delete_additional_file(file_path)
                 if success:
-                    # Удаляем из модели
                     self.model.removeRow(index.row())
                 else:
                     QMessageBox.warning(self, "Ошибка", "Не удалось удалить файл через API")
@@ -177,12 +176,8 @@ class AdditPage(BasePage):
                 index).data(Qt.ItemDataRole.UserRole)
             if file_path and os.path.exists(file_path):
                 try:
-                    if sys.platform == "win32":
-                        os.startfile(file_path)
-                    elif sys.platform == "darwin":  # macOS
-                        os.system(f'open "{file_path}"')
-                    else:  # Linux
-                        os.system(f'xdg-open "{file_path}"')
+                    os.startfile(file_path)
+                    
                 except Exception as e:
                     QMessageBox.critical(
                         self,
